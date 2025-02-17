@@ -1,6 +1,19 @@
 [package]
 name = "noda"
-version = "0.1.0"
+description = "An extremely customizable notification daemon. "
+version = "0.0.1"
+license = "MIT"
 edition = "2021"
 
 [dependencies]
+gtk4 = "0.9.6"
+gtk4-layer-shell = "0.4.0"
+tokio = { version = "1.43.0", features = ["full"] }
+zbus = { version = "5.5.0", features = ["tokio"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -3,8 +3,9 @@ use std::{collections::HashMap, future::pending};
 use crate::NodaResult;
 
 /// Notification D-Bus Server.
+#[allow(dead_code)]
 pub struct NotificationServer {
-    notifications: Vec<()>
+    notifications: Vec<()>,
 }
 
 #[zbus::interface(name = "org.freedesktop.Notifications")]
@@ -19,7 +20,7 @@ impl NotificationServer {
         _body: String,
         _actions: Vec<String>,
         _hints: HashMap<String, zbus::zvariant::Value<'_>>,
-        _expire_timeout: i32
+        _expire_timeout: i32,
     ) -> zbus::fdo::Result<u32> {
         println!("{app_name}");
         Ok(3)
@@ -27,12 +28,7 @@ impl NotificationServer {
 
     /// Server info.
     fn get_server_information(&self) -> (&str, &str, &str, &str) {
-        (
-            "noda",
-            "qxbthree",
-            "0.0.1",
-            "1.2"
-        )
+        ("noda", "qxbthree", "0.0.1", "1.2")
     }
 }
 
@@ -41,7 +37,7 @@ impl NotificationServer {
     pub async fn start() -> NodaResult<()> {
         // Creates new dbus server.
         let dbus_server = NotificationServer {
-            notifications: Vec::new()
+            notifications: Vec::new(),
         };
 
         // Register D-Bus session.
@@ -50,6 +46,8 @@ impl NotificationServer {
             .serve_at("/org/freedesktop/Notifications", dbus_server)?
             .build()
             .await?;
+
+        log::info!("Notification server started.");
 
         pending::<()>().await;
 

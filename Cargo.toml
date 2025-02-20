@@ -6,9 +6,12 @@ license = "MIT"
 edition = "2021"
 
 [dependencies]
+clap = { version = "4.5.30", features = ["derive"] }
 daemonize = "0.5.0"
+env_logger = "0.11.6"
 gtk4 = "0.9.6"
 gtk4-layer-shell = "0.4.0"
+log = "0.4.25"
 tokio = { version = "1.43.0", features = ["full"] }
 zbus = { version = "5.5.0", features = ["tokio"] }
 

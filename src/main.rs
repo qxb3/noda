@@ -1,37 +1,39 @@
+mod cli;
+mod daemon;
 mod notification_server;
 
-use daemonize::Daemonize;
+use clap::Parser;
+use cli::{NodaCli, NodaCommands};
+use daemon::start_daemon;
 use notification_server::NotificationServer;
-use std::{env, error::Error, fs::File, process::Command};
+use std::{error::Error, io::Write};
 
 /// Type alias for Result.
 pub type NodaResult<T> = Result<T, Box<dyn Error>>;
 
 #[tokio::main]
 async fn main() -> NodaResult<()> {
-    // Check if this current process has already been daemonized.
-    if env::var("___NODA_DAEMONIZE___").is_err() {
-        // Temporary files for stdout & stderr logging.
-        let stdout = File::create("/tmp/noda.log").unwrap();
-        let stderr = File::create("/tmp/noda.err").unwrap();
+    // Init logger.
+    env_logger::builder()
+        .format(|buf, record| writeln!(buf, "[{} {}] {}", buf.timestamp(), record.level(), record.args()))
+        .filter_level(log::LevelFilter::Trace)
+        .target(env_logger::Target::Stdout)
+        .init();
 
-        // Create and start a daemon.
-        Daemonize::new()
-            .pid_file("/tmp/noda.pid")
-            .chown_pid_file(true)
-            .stdout(stdout)
-            .stderr(stderr)
-            .start()?;
+    // Parse cli.
+    let cli = NodaCli::parse();
 
-        // Run noda again but in daemon context.
-        Command::new(env::current_exe()?)
-            .env("___NODA_DAEMONIZE___", "true")
-            .spawn()?;
+    match cli.command {
+        // Start the start command.
+        NodaCommands::Start => {
+            log::info!("noda starting...");
 
-        return Ok(());
+            NotificationServer::start().await?;
+        }
+
+        // Start the daemon command.
+        NodaCommands::Daemon => start_daemon()?,
     }
-
-    NotificationServer::start().await?;
 
     Ok(())
 }

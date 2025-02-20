@@ -10,7 +10,7 @@ pub type NodaResult<T> = Result<T, Box<dyn Error>>;
 #[tokio::main]
 async fn main() -> NodaResult<()> {
     // Check if this current process has already been daemonized.
-    if env::var("NODA_DAEMONIZE").is_err() {
+    if env::var("___NODA_DAEMONIZE___").is_err() {
         // Temporary files for stdout & stderr logging.
         let stdout = File::create("/tmp/noda.log").unwrap();
         let stderr = File::create("/tmp/noda.err").unwrap();
@@ -25,7 +25,7 @@ async fn main() -> NodaResult<()> {
 
         // Run noda again but in daemon context.
         Command::new(env::current_exe()?)
-            .env("NODA_DAEMONIZE", "true")
+            .env("___NODA_DAEMONIZE___", "true")
             .spawn()?;
 
         return Ok(());

@@ -13,7 +13,6 @@ gtk4 = "0.9.6"
 gtk4-layer-shell = "0.4.0"
 log = "0.4.25"
 tokio = { version = "1.43.0", features = ["full"] }
-zbus = { version = "5.5.0", features = ["tokio"] }
 
 [profile.release]
 opt-level = 3

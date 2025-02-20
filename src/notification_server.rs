@@ -3,12 +3,12 @@ use std::{collections::HashMap, future::pending};
 use crate::NodaResult;
 
 /// Notification D-Bus Server.
-pub struct NotifDbusServer {
+pub struct NotificationServer {
     notifications: Vec<()>
 }
 
 #[zbus::interface(name = "org.freedesktop.Notifications")]
-impl NotifDbusServer {
+impl NotificationServer {
     /// When there is a new notification.
     fn notify(
         &mut self,
@@ -36,11 +36,11 @@ impl NotifDbusServer {
     }
 }
 
-impl NotifDbusServer {
+impl NotificationServer {
     /// Start D-Bus notification server.
     pub async fn start() -> NodaResult<()> {
         // Creates new dbus server.
-        let dbus_server = NotifDbusServer {
+        let dbus_server = NotificationServer {
             notifications: Vec::new()
         };
 

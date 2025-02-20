@@ -1,0 +1,22 @@
+# Formatting options for Rust code
+
+# General settings
+edition = "2021"              # Ensure compatibility with Rust 2021 edition
+max_width = 90               # Line length limit for better readability
+use_small_heuristics = "Max"  # More compact formatting when reasonable
+
+# Indentation and spacing
+tab_spaces = 4          # Standard indentation
+hard_tabs = false       # Use spaces instead of hard tabs
+newline_style = "Unix"  # Use LF line endings
+
+# Wrapping and alignment
+chain_width = 60                      # Max width for method chains before wrapping
+struct_lit_width = 40                 # Struct literals line-wrap width
+fn_call_width = 60                    # Function call argument width before wrapping
+match_arm_leading_pipes = "Preserve"  # Keep leading pipes in match arms
+
+# Style preferences
+reorder_imports = true          # Sort imports alphabetically
+reorder_modules = true          # Sort module declarations
+merge_derives = true            # Merge multiple `#[derive()]` into one

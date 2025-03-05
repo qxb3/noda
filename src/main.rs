@@ -1,11 +1,11 @@
 mod cli;
 mod daemon;
-mod notification_server;
+mod server;
 
 use clap::Parser;
 use cli::{NodaCli, NodaCommands};
 use daemon::start_daemon;
-use notification_server::NotificationServer;
+use server::NotificationServer;
 use std::{error::Error, io::Write};
 
 /// Type alias for Result.
@@ -15,7 +15,15 @@ pub type NodaResult<T> = Result<T, Box<dyn Error>>;
 async fn main() -> NodaResult<()> {
     // Init logger.
     env_logger::builder()
-        .format(|buf, record| writeln!(buf, "[{} {}] {}", buf.timestamp(), record.level(), record.args()))
+        .format(|buf, record| {
+            writeln!(
+                buf,
+                "[{} {}] {}",
+                buf.timestamp(),
+                record.level(),
+                record.args()
+            )
+        })
         .filter_level(log::LevelFilter::Trace)
         .target(env_logger::Target::Stdout)
         .init();

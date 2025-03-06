@@ -4,7 +4,7 @@ use crate::NodaResult;
 
 /// Notification Urgency.
 #[derive(Debug, PartialEq)]
-enum Urgency {
+pub enum Urgency {
     Low,
     Normal,
     Critical,
@@ -12,7 +12,7 @@ enum Urgency {
 
 /// Notification Hint.
 #[derive(Debug, PartialEq)]
-enum Hint {
+pub enum Hint {
     ActionIcons(bool),
     Category(String),
     DesktopEntry(String),
@@ -38,15 +38,15 @@ enum Hint {
 
 /// A struct representing a Notification.
 #[derive(Debug)]
-struct Notification {
-    app_name: String,
-    replace_id: u32,
-    app_icon: String,
-    summary: String,
-    body: String,
-    actions: Vec<String>,
-    hints: Vec<Hint>,
-    expire_timeout: i32,
+pub struct Notification {
+    pub app_name: String,
+    pub replace_id: u32,
+    pub app_icon: String,
+    pub summary: String,
+    pub body: String,
+    pub actions: Vec<String>,
+    pub hints: Vec<Hint>,
+    pub expire_timeout: i32,
 }
 
 /// Notification D-Bus Server.
@@ -73,141 +73,72 @@ impl NotificationServer {
         for (name, value) in hints.iter() {
             match name.as_str() {
                 "action-icons" => {
-                    parsed_hints.push(Hint::ActionIcons(value.downcast_ref().map_err(
-                        |err| zbus::fdo::Error::UnknownProperty(err.to_string()),
-                    )?))
+                    let action_icons: bool = value
+                        .downcast_ref()
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast action-icons: {err}")))?;
+
+                    parsed_hints.push(Hint::ActionIcons(action_icons));
                 }
                 "category" => {
-                    parsed_hints.push(Hint::Category(value.downcast_ref().map_err(
-                        |err| zbus::fdo::Error::UnknownProperty(err.to_string()),
-                    )?))
+                    let category: String = value
+                        .downcast_ref()
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast category: {err}")))?;
+
+                    parsed_hints.push(Hint::Category(category));
                 }
                 "desktop-entry" => {
-                    parsed_hints.push(Hint::DesktopEntry(value.downcast_ref().map_err(
-                        |err| zbus::fdo::Error::UnknownProperty(err.to_string()),
-                    )?))
+                    let desktop_entry: String = value
+                        .downcast_ref()
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast desktop-entry: {err}")))?;
+
+                    parsed_hints.push(Hint::DesktopEntry(desktop_entry));
                 }
                 "image-data" => {
                     if let zvariant::Value::Structure(structure) = value {
                         let fields = structure.fields();
 
-                        let width = match fields.get(0) {
-                            Some(width) => match width {
-                                zvariant::Value::I32(width) => *width,
-                                _ => {
-                                    return Err(zbus::fdo::Error::Failed(
-                                        "Expected an i32 for width".into(),
-                                    ))
-                                }
-                            },
-                            None => {
-                                return Err(zbus::fdo::Error::Failed(
-                                    "Missing width parameter".into(),
-                                ))
-                            }
-                        };
+                        let width = fields
+                            .get(0)
+                            .ok_or_else(|| zbus::fdo::Error::Failed("Missing width parameter".into()))?
+                            .downcast_ref::<i32>()
+                            .map_err(|_| zbus::fdo::Error::Failed("Expected an i32 for width parameter".into()))?;
 
-                        let height = match fields.get(1) {
-                            Some(height) => match height {
-                                zvariant::Value::I32(height) => *height,
-                                _ => {
-                                    return Err(zbus::fdo::Error::Failed(
-                                        "Expected an i32 for height".into(),
-                                    ))
-                                }
-                            },
-                            None => {
-                                return Err(zbus::fdo::Error::Failed(
-                                    "Missing height parameter".into(),
-                                ))
-                            }
-                        };
+                        let height = fields
+                            .get(1)
+                            .ok_or_else(|| zbus::fdo::Error::Failed("Missing height parameter".into()))?
+                            .downcast_ref::<i32>()
+                            .map_err(|_| zbus::fdo::Error::Failed("Expected an i32 for height parameter".into()))?;
 
-                        let row_side = match fields.get(2) {
-                            Some(row_side) => match row_side {
-                                zvariant::Value::I32(row_side) => *row_side,
-                                _ => {
-                                    return Err(zbus::fdo::Error::Failed(
-                                        "Expected an i32 for row_side".into(),
-                                    ))
-                                }
-                            },
-                            None => {
-                                return Err(zbus::fdo::Error::Failed(
-                                    "Missing row_side parameter".into(),
-                                ))
-                            }
-                        };
+                        let row_side = fields
+                            .get(2)
+                            .ok_or_else(|| zbus::fdo::Error::Failed("Missing row_side parameter".into()))?
+                            .downcast_ref::<i32>()
+                            .map_err(|_| zbus::fdo::Error::Failed("Expected an i32 for row_side parameter".into()))?;
 
-                        let has_alpha = match fields.get(3) {
-                            Some(has_alpha) => match has_alpha {
-                                zvariant::Value::Bool(has_alpha) => *has_alpha,
-                                _ => {
-                                    return Err(zbus::fdo::Error::Failed(
-                                        "Expected a boolean for has_alpha".into(),
-                                    ))
-                                }
-                            },
-                            None => {
-                                return Err(zbus::fdo::Error::Failed(
-                                    "Missing has_alpha parameter".into(),
-                                ))
-                            }
-                        };
+                        let has_alpha = fields
+                            .get(3)
+                            .ok_or_else(|| zbus::fdo::Error::Failed("Missing has_alpha parameter".into()))?
+                            .downcast_ref::<bool>()
+                            .map_err(|_| zbus::fdo::Error::Failed("Expected a boolean for has_alpha parameter".into()))?;
 
-                        let bits_per_sample = match fields.get(4) {
-                            Some(bits_per_sample) => match bits_per_sample {
-                                zvariant::Value::I32(bits_per_sample) => {
-                                    *bits_per_sample
-                                }
-                                _ => {
-                                    return Err(zbus::fdo::Error::Failed(
-                                        "Expected a i32 for bits_per_sample".into(),
-                                    ))
-                                }
-                            },
-                            None => {
-                                return Err(zbus::fdo::Error::Failed(
-                                    "Missing bits_per_sample parameter".into(),
-                                ))
-                            }
-                        };
+                        let bits_per_sample = fields
+                            .get(4)
+                            .ok_or_else(|| zbus::fdo::Error::Failed("Missing bits_per_sample parameter".into()))?
+                            .downcast_ref::<i32>()
+                            .map_err(|_| zbus::fdo::Error::Failed("Expected an i32 for bits_per_sample parameter".into()))?;
 
-                        let channels = match fields.get(5) {
-                            Some(channels) => match channels {
-                                zvariant::Value::I32(channels) => *channels,
-                                _ => {
-                                    return Err(zbus::fdo::Error::Failed(
-                                        "Expected a i32 for channels".into(),
-                                    ))
-                                }
-                            },
-                            None => {
-                                return Err(zbus::fdo::Error::Failed(
-                                    "Missing channels parameter".into(),
-                                ))
-                            }
-                        };
+                        let channels = fields
+                            .get(5)
+                            .ok_or_else(|| zbus::fdo::Error::Failed("Missing channels parameter".into()))?
+                            .downcast_ref::<i32>()
+                            .map_err(|_| zbus::fdo::Error::Failed("Expected an i32 for channels parameter".into()))?;
 
-                        let data = match fields.get(6) {
-                            Some(data) => match data {
-                                zvariant::Value::Array(_) => {
-                                    Vec::<u8>::try_from(data.clone()).expect("")
-                                }
-                                _ => {
-                                    return Err(zbus::fdo::Error::Failed(
-                                        "Expected an Array of bytes for image data".into(),
-                                    ))
-                                }
-                            },
-                            None => {
-                                return Err(zbus::fdo::Error::Failed(
-                                    "Missing image data parameter".into(),
-                                ))
-                            }
-                        };
-
-                        println!("ran 3");
+                        let data: Vec<u8> = fields
+                            .get(6)
+                            .ok_or_else(|| zbus::fdo::Error::Failed("Missing image data parameter".into()))?
+                            .to_owned()
+                            .try_into()
+                            .map_err(|_| zbus::fdo::Error::Failed("Expected an Array of bytes for image data".into()))?;
 
                         parsed_hints.push(Hint::ImageData {
                             width,
@@ -220,46 +151,62 @@ impl NotificationServer {
                         });
                     }
                 }
-                "image-path" => parsed_hints.push(Hint::ImagePath(
-                    value
+                "image-path" => {
+                    let image_path = value
                         .downcast_ref()
-                        .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?,
-                )),
-                "resident" => parsed_hints.push(Hint::Resident(
-                    value
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast image-path: {err}")))?;
+
+                    parsed_hints.push(Hint::ImagePath(image_path));
+                },
+                "resident" => {
+                    let resident = value
                         .downcast_ref()
-                        .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?,
-                )),
-                "sound-file" => parsed_hints.push(Hint::SoundFile(
-                    value
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast resident: {err}")))?;
+
+                    parsed_hints.push(Hint::Resident(resident));
+                },
+                "sound-file" => {
+                    let sound_file = value
                         .downcast_ref()
-                        .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?,
-                )),
-                "sound-name" => parsed_hints.push(Hint::SoundName(
-                    value
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast sound-file: {err}")))?;
+
+                    parsed_hints.push(Hint::SoundFile(sound_file));
+                },
+                "sound-name" => {
+                    let sound_name = value
                         .downcast_ref()
-                        .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?,
-                )),
-                "suppress-sound" => parsed_hints.push(Hint::SuppressSound(
-                    value
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast sound-name: {err}")))?;
+
+                    parsed_hints.push(Hint::SoundName(sound_name));
+                }
+                "suppress-sound" => {
+                    let suppress_sound = value
                         .downcast_ref()
-                        .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?,
-                )),
-                "transient" => parsed_hints.push(Hint::Transient(
-                    value
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast suppress-sound: {err}")))?;
+
+                    parsed_hints.push(Hint::SuppressSound(suppress_sound));
+                }
+                "transient" => {
+                    let transient = value
                         .downcast_ref()
-                        .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?,
-                )),
-                "x" => parsed_hints.push(Hint::X(
-                    value
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast transient: {err}")))?;
+
+                    parsed_hints.push(Hint::Transient(transient));
+                }
+                "x" => {
+                    let x = value
                         .downcast_ref()
-                        .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?,
-                )),
-                "y" => parsed_hints.push(Hint::Y(
-                    value
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast x: {err}")))?;
+
+                    parsed_hints.push(Hint::X(x));
+                }
+                "y" => {
+                    let y = value
                         .downcast_ref()
-                        .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?,
-                )),
+                        .map_err(|err| zbus::fdo::Error::Failed(format!("Failed to downcast y: {err}")))?;
+
+                    parsed_hints.push(Hint::Y(y));
+                }
                 "urgency" => {
                     if let zvariant::Value::U8(b) = value {
                         let urgency = match b {
@@ -296,6 +243,11 @@ impl NotificationServer {
         self.notifications.push(notification);
 
         Ok(3)
+    }
+
+    /// Server capabilities.
+    fn get_capabilities(&self) -> Vec<&str> {
+        vec!["action-icons", "actions", "body", "body-hyperlinks", "persistent", "sound"]
     }
 
     /// Server info.

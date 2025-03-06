@@ -1,6 +1,6 @@
 use std::{collections::HashMap, future::pending};
 
-use crate::NodaResult;
+use crate::{noda::NodaEvent, NodaResult};
 
 /// Notification Urgency.
 #[derive(Debug, PartialEq)]
@@ -52,6 +52,7 @@ pub struct Notification {
 /// Notification D-Bus Server.
 pub struct NotificationServer {
     notifications: Vec<Notification>,
+    channel_sender: tokio::sync::mpsc::Sender<NodaEvent>
 }
 
 #[zbus::interface(name = "org.freedesktop.Notifications")]
@@ -258,20 +259,29 @@ impl NotificationServer {
 
 impl NotificationServer {
     /// Start D-Bus notification server.
-    pub async fn start() -> NodaResult<()> {
-        // Creates new dbus server.
-        let dbus_server = NotificationServer { notifications: Vec::new() };
+    pub async fn start(channel_sender: tokio::sync::mpsc::Sender<NodaEvent>) -> NodaResult<()> {
+        tokio::spawn(async move {
+            // Creates new dbus server.
+            let dbus_server = NotificationServer {
+                notifications: Vec::new(),
+                channel_sender
+            };
 
-        // Register D-Bus session.
-        let _conn = zbus::conn::Builder::session()?
-            .name("org.freedesktop.Notifications")?
-            .serve_at("/org/freedesktop/Notifications", dbus_server)?
-            .build()
-            .await?;
+            // Register D-Bus session.
+            let _conn = zbus::conn::Builder::session()?
+                .name("org.freedesktop.Notifications")?
+                .serve_at("/org/freedesktop/Notifications", dbus_server)?
+                .build()
+                .await?;
 
-        log::info!("Notification server started.");
+            log::info!("Notification server started.");
 
-        pending::<()>().await;
+            pending::<()>().await;
+
+            Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+        })
+            .await?
+            .map_err(|err| format!("Failed to start notification server: {err}"))?;
 
         Ok(())
     }

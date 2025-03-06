@@ -1,15 +1,17 @@
 mod cli;
 mod daemon;
 mod server;
+mod noda;
 
 use clap::Parser;
 use cli::{NodaCli, NodaCommands};
-use daemon::start_daemon;
-use server::NotificationServer;
 use std::{error::Error, io::Write};
 
+use daemon::start_daemon;
+use noda::start_noda;
+
 /// Type alias for Result.
-pub type NodaResult<T> = Result<T, Box<dyn Error>>;
+pub type NodaResult<T> = Result<T, Box<dyn Error + Send + Sync>>;
 
 #[tokio::main]
 async fn main() -> NodaResult<()> {
@@ -32,15 +34,8 @@ async fn main() -> NodaResult<()> {
     let cli = NodaCli::parse();
 
     match cli.command {
-        // Start the start command.
-        NodaCommands::Start => {
-            log::info!("noda starting...");
-
-            NotificationServer::start().await?;
-        }
-
-        // Start the daemon command.
         NodaCommands::Daemon => start_daemon()?,
+        NodaCommands::Start => start_noda().await?,
     }
 
     Ok(())

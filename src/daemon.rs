@@ -9,7 +9,7 @@ pub fn start_daemon() -> NodaResult<()> {
     // Check if this current process has already been daemonized.
     if env::var("___NODA_DAEMONIZE___").is_err() {
         // Temporary files for stdout & stderr logging.
-        let stdout = File::create("/tmp/noda.log").unwrap();
+        let stdout = File::create("/tmp/noda.log")?;
 
         log::info!("Daemon starting...");
 
